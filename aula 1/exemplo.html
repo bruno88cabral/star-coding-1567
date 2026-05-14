@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Métodos JavaScript para Acessar Elementos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Sora:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #0e1117;
+        --surface: #161b27;
+        --surface2: #1e2535;
+        --border: #2a3347;
+        --text: #e8edf5;
+        --muted: #7a8ba0;
+        --accent: #4f8ef7;
+        --green: #34d399;
+        --amber: #fbbf24;
+        --coral: #f87171;
+        --purple: #a78bfa;
+        --pink: #f472b6;
+        --mono: "JetBrains Mono", monospace;
+        --sans: "Sora", sans-serif;
+      }
+
+      body {
+        font-family: var(--sans);
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 0 0 4rem;
+      }
+
+      header {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 2rem 3rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+      }
+
+      .header-badge {
+        background: var(--accent);
+        color: #fff;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      h1 span {
+        color: var(--accent);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        gap: 0;
+        max-width: 1200px;
+        margin: 2.5rem auto 0;
+        padding: 0 2rem;
+      }
+
+      /* ---- SIDEBAR: METHODS ---- */
+      .sidebar {
+        padding-right: 2rem;
+      }
+
+      .sidebar-title {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 1rem;
+      }
+
+      .method-btn {
+        display: block;
+        width: 100%;
+        text-align: left;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px 16px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.18s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .method-btn::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--btn-color, var(--accent));
+        border-radius: 2px 0 0 2px;
+        transform: scaleY(0);
+        transition: transform 0.18s ease;
+      }
+
+      .method-btn:hover,
+      .method-btn.active {
+        border-color: var(--btn-color, var(--accent));
+        background: var(--surface2);
+      }
+
+      .method-btn:hover::before,
+      .method-btn.active::before {
+        transform: scaleY(1);
+      }
+
+      .method-name {
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--btn-color, var(--accent));
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .method-desc {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      /* ---- MAIN PANEL ---- */
+      .main-panel {
+        border-left: 1px solid var(--border);
+        padding-left: 2rem;
+      }
+
+      .info-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .info-card h2 {
+        font-family: var(--mono);
+        font-size: 15px;
+        color: var(--method-color, var(--accent));
+        margin-bottom: 0.5rem;
+      }
+
+      .info-card p {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.7;
+        margin-bottom: 0.75rem;
+      }
+
+      .returns-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 4px 10px;
+        border-radius: 4px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+
+      .returns-badge strong {
+        color: var(--text);
+      }
+
+      /* CODE BLOCK */
+      .code-block {
+        background: #090c13;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+      }
+
+      .code-block pre {
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.8;
+        color: #c9d1d9;
+        white-space: pre;
+      }
+
+      .kw {
+        color: #ff79c6;
+      }
+      .fn {
+        color: #50fa7b;
+      }
+      .str {
+        color: #f1fa8c;
+      }
+      .cm {
+        color: #6272a4;
+      }
+      .var {
+        color: #8be9fd;
+      }
+      .num {
+        color: #bd93f9;
+      }
+
+      /* DEMO AREA */
+      .demo-label {
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 0.75rem;
+      }
+
+      .demo-area {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        min-height: 160px;
+        color: #1a1a2e;
+      }
+
+      /* Elements to highlight */
+      .demo-title {
+        font-family: var(--sans);
+        font-size: 18px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 8px;
+      }
+
+      .demo-subtitle {
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 14px;
+      }
+
+      .demo-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .item {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        cursor: default;
+      }
+
+      .item.fruta {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .item.vegetal {
+        background: #e3f2fd;
+        color: #1565c0;
+      }
+      .item.proteina {
+        background: #fce4ec;
+        color: #880e4f;
+      }
+
+      .item.highlighted {
+        transform: scale(1.08);
+        box-shadow:
+          0 0 0 3px currentColor,
+          0 6px 20px rgba(0, 0, 0, 0.2);
+        animation: pulse 0.6s ease;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.12);
+        }
+        100% {
+          transform: scale(1.08);
+        }
+      }
+
+      .demo-box {
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        border: 2px dashed #ddd;
+        color: #666;
+        transition: all 0.3s ease;
+      }
+
+      .demo-box.highlighted {
+        border-style: solid;
+        background: #fff9c4;
+        border-color: #f59e0b;
+        color: #92400e;
+        animation: pulse 0.6s ease;
+      }
+
+      /* OUTPUT */
+      .output-area {
+        background: #090c13;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+      }
+
+      .output-label {
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 0.5rem;
+      }
+
+      #output-text {
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.8;
+        color: var(--green);
+        min-height: 60px;
+        white-space: pre-wrap;
+      }
+
+      /* RUN BUTTON */
+      .run-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--method-color, var(--accent));
+        color: #fff;
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 700;
+        border: none;
+        border-radius: 7px;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: opacity 0.15s;
+        margin-bottom: 1.5rem;
+      }
+
+      .run-btn:hover {
+        opacity: 0.85;
+      }
+
+      .play-icon {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+      }
+
+      /* RESET BUTTON */
+      .reset-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: transparent;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 9px 16px;
+        cursor: pointer;
+        transition: all 0.15s;
+        margin-bottom: 1.5rem;
+        margin-left: 10px;
+      }
+
+      .reset-btn:hover {
+        color: var(--text);
+        border-color: #4a5568;
+      }
+
+      /* DICA */
+      .tip {
+        background: #1a2235;
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--amber);
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.7;
+        margin-top: 1rem;
+      }
+
+      .tip strong {
+        color: var(--amber);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-badge">JS DOM</div>
+      <h1>Métodos para <span>Acessar Elementos</span> no JavaScript</h1>
+    </header>
+
+    <div class="layout">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <p class="sidebar-title">Escolha o método</p>
+
+        <button
+          class="method-btn active"
+          style="--btn-color: #4f8ef7"
+          onclick="selectMethod('byId')"
+        >
+          <span class="method-name">getElementById()</span>
+          <span class="method-desc"
+            >Seleciona um único elemento pelo atributo <code>id</code></span
+          >
+        </button>
+
+        <button
+          class="method-btn"
+          style="--btn-color: #34d399"
+          onclick="selectMethod('byClass')"
+        >
+          <span class="method-name">getElementsByClassName()</span>
+          <span class="method-desc"
+            >Seleciona todos elementos com determinada classe CSS</span
+          >
+        </button>
+
+        <button
+          class="method-btn"
+          style="--btn-color: #fbbf24"
+          onclick="selectMethod('byTag')"
+        >
+          <span class="method-name">getElementsByTagName()</span>
+          <span class="method-desc"
+            >Seleciona todos os elementos de uma tag HTML</span
+          >
+        </button>
+
+        <button
+          class="method-btn"
+          style="--btn-color: #a78bfa"
+          onclick="selectMethod('querySelector')"
+        >
+          <span class="method-name">querySelector()</span>
+          <span class="method-desc"
+            >Seleciona o <strong>primeiro</strong> elemento via seletor
+            CSS</span
+          >
+        </button>
+
+        <button
+          class="method-btn"
+          style="--btn-color: #f472b6"
+          onclick="selectMethod('querySelectorAll')"
+        >
+          <span class="method-name">querySelectorAll()</span>
+          <span class="method-desc"
+            >Seleciona <strong>todos</strong> os elementos via seletor CSS</span
+          >
+        </button>
+      </aside>
+
+      <!-- MAIN PANEL -->
+      <main class="main-panel">
+        <!-- INFO -->
+        <div class="info-card" id="info-card" style="--method-color: #4f8ef7">
+          <h2 id="method-title">document.getElementById(id)</h2>
+          <p id="method-description">
+            Busca no documento um elemento que tenha o atributo
+            <code>id</code> igual ao valor informado. Retorna exatamente um
+            elemento, ou <code>null</code> se não encontrar.
+          </p>
+          <div class="returns-badge">
+            Retorna: <strong id="returns-type">Element | null</strong>
+          </div>
+        </div>
+
+        <!-- CODE -->
+        <div class="code-block">
+          <pre
+            id="code-display"
+          ><span class="cm">// Seleciona o elemento com id="caixa-info"</span>
+<span class="kw">const</span> <span class="var">elemento</span> = <span class="fn">document</span>.<span class="fn">getElementById</span>(<span class="str">'caixa-info'</span>);
+
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">elemento</span>.<span class="fn">textContent</span>);
+<span class="var">elemento</span>.<span class="fn">style</span>.background = <span class="str">'#fff9c4'</span>;</pre>
+        </div>
+
+        <!-- BUTTONS -->
+        <button
+          class="run-btn"
+          id="run-btn"
+          style="background: #4f8ef7"
+          onclick="runDemo()"
+        >
+          <svg class="play-icon" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          Executar
+        </button>
+        <button class="reset-btn" onclick="resetDemo()">↺ Resetar</button>
+
+        <!-- DEMO AREA -->
+        <p class="demo-label">Área de demonstração (HTML da página)</p>
+        <div class="demo-area">
+          <p class="demo-title" id="titulo-demo">🥗 Alimentos do Mercado</p>
+          <p class="demo-subtitle" id="subtitulo-demo">
+            Confira nossa lista de produtos frescos
+          </p>
+
+          <div class="demo-list">
+            <span class="item fruta" id="item-manga">Manga</span>
+            <span class="item fruta" id="item-morango">Morango</span>
+            <span class="item vegetal" id="item-cenoura">Cenoura</span>
+            <span class="item vegetal" id="item-espinafre">Espinafre</span>
+            <span class="item proteina" id="item-frango">Frango</span>
+            <span class="item proteina" id="item-ovo">Ovo</span>
+          </div>
+
+          <div class="demo-box" id="caixa-info">
+            📦 Produto em destaque: Hortifruti Orgânico
+          </div>
+        </div>
+
+        <!-- OUTPUT -->
+        <div class="output-area">
+          <p class="output-label">Console / Saída</p>
+          <div id="output-text">
+            // Clique em "Executar" para ver o resultado...
+          </div>
+        </div>
+
+        <div class="tip" id="tip-box">
+          <strong>💡 Dica:</strong>
+          <span id="tip-text"
+            >Use <code>getElementById</code> quando precisar de
+            <strong>um único elemento específico</strong>. O
+            <code>id</code> deve ser único na página inteira.</span
+          >
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const methods = {
+        byId: {
+          color: "#4f8ef7",
+          title: "document.getElementById(id)",
+          description:
+            "Busca no documento um elemento que tenha o atributo <code>id</code> igual ao valor informado. Retorna exatamente um elemento, ou <code>null</code> se não encontrar.",
+          returns: "Element | null",
+          code: `<span class="cm">// Seleciona o elemento com id="caixa-info"</span>
+<span class="kw">const</span> <span class="var">elemento</span> = <span class="fn">document</span>.<span class="fn">getElementById</span>(<span class="str">'caixa-info'</span>);
+
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">elemento</span>.<span class="fn">textContent</span>);
+<span class="var">elemento</span>.<span class="fn">style</span>.background = <span class="str">'#fff9c4'</span>;`,
+          tip: "Use <code>getElementById</code> quando precisar de <strong>um único elemento específico</strong>. O <code>id</code> deve ser único na página inteira.",
+          run: () => {
+            const el = document.getElementById("caixa-info");
+            el.classList.add("highlighted");
+            return `> elemento encontrado: <div class="demo-box">\n> textContent: "${el.textContent.trim()}"`;
+          },
+        },
+        byClass: {
+          color: "#34d399",
+          title: "document.getElementsByClassName(classe)",
+          description:
+            "Retorna uma <strong>HTMLCollection</strong> (lista viva) de todos os elementos que possuem a classe CSS informada. Pode haver zero, um ou vários elementos.",
+          returns: "HTMLCollection (lista)",
+          code: `<span class="cm">// Seleciona todos os elementos com classe "fruta"</span>
+<span class="kw">const</span> <span class="var">frutas</span> = <span class="fn">document</span>.<span class="fn">getElementsByClassName</span>(<span class="str">'fruta'</span>);
+
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Total encontrado:'</span>, <span class="var">frutas</span>.<span class="fn">length</span>);
+
+<span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> < <span class="var">frutas</span>.<span class="fn">length</span>; <span class="var">i</span>++) {
+  <span class="var">frutas</span>[<span class="var">i</span>].<span class="fn">style</span>.border = <span class="str">'2px solid #34d399'</span>;
+}`,
+          tip: "<code>getElementsByClassName</code> retorna uma <strong>HTMLCollection</strong>, não um array. Para usar métodos como <code>.forEach()</code>, converta com <code>Array.from()</code>.",
+          run: () => {
+            const items = document.getElementsByClassName("fruta");
+            for (let i = 0; i < items.length; i++)
+              items[i].classList.add("highlighted");
+            return `> Total encontrado: ${items.length}\n> elementos: [${Array.from(
+              items,
+            )
+              .map((e) => '"' + e.textContent + '"')
+              .join(", ")}]`;
+          },
+        },
+        byTag: {
+          color: "#fbbf24",
+          title: "document.getElementsByTagName(tag)",
+          description:
+            "Retorna uma <strong>HTMLCollection</strong> com todos os elementos que usam a tag HTML especificada (ex: <code>span</code>, <code>p</code>, <code>div</code>). Muito útil para percorrer estruturas repetitivas.",
+          returns: "HTMLCollection (lista)",
+          code: `<span class="cm">// Seleciona todos os elementos <span> da lista</span>
+<span class="kw">const</span> <span class="var">spans</span> = <span class="fn">document</span>.<span class="fn">getElementsByTagName</span>(<span class="str">'span'</span>);
+
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Total de spans:'</span>, <span class="var">spans</span>.<span class="fn">length</span>);
+
+<span class="kw">for</span> (<span class="kw">const</span> <span class="var">span</span> <span class="kw">of</span> <span class="var">spans</span>) {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">span</span>.<span class="fn">textContent</span>);
+}`,
+          tip: 'Use <code>getElementsByTagName</code> para selecionar elementos pela tag HTML. Passe <code>"*"</code> como argumento para selecionar <strong>todos</strong> os elementos da página.',
+          run: () => {
+            const spans = document.querySelectorAll(".demo-area span");
+            spans.forEach((s) => s.classList.add("highlighted"));
+            return (
+              `> Total de <span> na lista: ${spans.length}\n` +
+              Array.from(spans)
+                .map((s) => `> "${s.textContent}"`)
+                .join("\n")
+            );
+          },
+        },
+        querySelector: {
+          color: "#a78bfa",
+          title: "document.querySelector(seletor)",
+          description:
+            "Usa a sintaxe de <strong>seletores CSS</strong> para encontrar o <strong>primeiro</strong> elemento correspondente no documento. Extremamente flexível e poderoso.",
+          returns: "Element | null",
+          code: `<span class="cm">// Usa seletor CSS — pega o primeiro elemento .vegetal</span>
+<span class="kw">const</span> <span class="var">vegetal</span> = <span class="fn">document</span>.<span class="fn">querySelector</span>(<span class="str">'.vegetal'</span>);
+
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">vegetal</span>.<span class="fn">textContent</span>);
+
+<span class="cm">// Pode usar qualquer seletor CSS!</span>
+<span class="kw">const</span> <span class="var">primeiro</span> = <span class="fn">document</span>.<span class="fn">querySelector</span>(<span class="str">'#item-manga'</span>);`,
+          tip: '<code>querySelector</code> aceita qualquer seletor CSS válido: <code>".classe"</code>, <code>"#id"</code>, <code>"div > p"</code>, <code>"[data-tipo]"</code> etc. Retorna apenas o <strong>primeiro</strong> resultado.',
+          run: () => {
+            const el = document.querySelector(".demo-area .vegetal");
+            el.classList.add("highlighted");
+            return `> Primeiro ".vegetal" encontrado:\n> textContent: "${el.textContent}"`;
+          },
+        },
+        querySelectorAll: {
+          color: "#f472b6",
+          title: "document.querySelectorAll(seletor)",
+          description:
+            "Igual ao <code>querySelector</code>, mas retorna uma <strong>NodeList</strong> com <em>todos</em> os elementos correspondentes ao seletor CSS. A NodeList pode ser percorrida com <code>forEach()</code>.",
+          returns: "NodeList (lista estática)",
+          code: `<span class="cm">// Seleciona todos os elementos .proteina</span>
+<span class="kw">const</span> <span class="var">proteinas</span> = <span class="fn">document</span>.<span class="fn">querySelectorAll</span>(<span class="str">'.proteina'</span>);
+
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Proteínas:'</span>, <span class="var">proteinas</span>.<span class="fn">length</span>);
+
+<span class="cm">// NodeList suporta forEach diretamente!</span>
+<span class="var">proteinas</span>.<span class="fn">forEach</span>(<span class="var">item</span> => {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">item</span>.<span class="fn">textContent</span>);
+});`,
+          tip: "A grande vantagem sobre <code>getElementsByClassName</code> é que <strong>NodeList</strong> já suporta <code>.forEach()</code> nativamente. Além disso, o seletor pode ser qualquer coisa CSS!",
+          run: () => {
+            const items = document.querySelectorAll(".demo-area .proteina");
+            items.forEach((el) => el.classList.add("highlighted"));
+            return (
+              `> proteinas.length: ${items.length}\n` +
+              Array.from(items)
+                .map((e) => `> "${e.textContent}"`)
+                .join("\n")
+            );
+          },
+        },
+      };
+
+      let current = "byId";
+
+      function selectMethod(key) {
+        resetDemo();
+        current = key;
+        const m = methods[key];
+
+        document
+          .querySelectorAll(".method-btn")
+          .forEach((b) => b.classList.remove("active"));
+        event.currentTarget.classList.add("active");
+
+        document
+          .getElementById("info-card")
+          .style.setProperty("--method-color", m.color);
+        document.getElementById("method-title").textContent = m.title;
+        document.getElementById("method-description").innerHTML = m.description;
+        document.getElementById("returns-type").textContent = m.returns;
+        document.getElementById("code-display").innerHTML = m.code;
+        document.getElementById("run-btn").style.background = m.color;
+        document.getElementById("tip-text").innerHTML = m.tip;
+        document.getElementById("output-text").textContent =
+          '// Clique em "Executar" para ver o resultado...';
+      }
+
+      function runDemo() {
+        resetHighlights();
+        const m = methods[current];
+        const result = m.run();
+        document.getElementById("output-text").textContent = result;
+      }
+
+      function resetHighlights() {
+        document
+          .querySelectorAll(".highlighted")
+          .forEach((el) => el.classList.remove("highlighted"));
+      }
+
+      function resetDemo() {
+        resetHighlights();
+        document.getElementById("output-text").textContent =
+          '// Clique em "Executar" para ver o resultado...';
+      }
+    </script>
+  </body>
+</html>
