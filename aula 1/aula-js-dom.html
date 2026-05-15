@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JavaScript & DOM — Alterando o HTML com JS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #181c26;
+  --surface2: #1e2433;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e8eaf2;
+  --muted: #6b7280;
+  --accent: #7c6bff;
+  --accent2: #a78bfa;
+  --green: #34d399;
+  --green2: #6ee7b7;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --pink: #f472b6;
+  --cyan: #22d3ee;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Syne', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+body { font-family: var(--sans); color: var(--text); }
+
+/* ── DECK WRAPPER ── */
+.deck { width: 100vw; height: 100vh; position: relative; }
+
+/* ── SLIDES ── */
+.slide { position: absolute; inset: 0; display: none; flex-direction: column; padding: 0; opacity: 0; transition: opacity 0.3s; }
+.slide.active { display: flex; opacity: 1; }
+
+/* ── SLIDE HEADER ── */
+.slide-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 20px 40px 0;
+  flex-shrink: 0;
+}
+.slide-tag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 4px 10px; border-radius: 4px;
+  border: 1px solid; font-weight: 700;
+}
+.tag-open { color: var(--blue); border-color: rgba(96,165,250,0.3); background: rgba(96,165,250,0.08); }
+.tag-concept { color: var(--accent2); border-color: rgba(167,139,250,0.3); background: rgba(167,139,250,0.08); }
+.tag-demo { color: var(--green); border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.08); }
+.tag-practice { color: var(--amber); border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.08); }
+.tag-close { color: var(--pink); border-color: rgba(244,114,182,0.3); background: rgba(244,114,182,0.08); }
+.slide-num-badge {
+  margin-left: auto; font-family: var(--mono); font-size: 12px;
+  color: var(--muted); letter-spacing: 0.05em;
+}
+
+/* ── SLIDE BODY ── */
+.slide-body {
+  flex: 1; display: flex; flex-direction: column;
+  padding: 24px 40px 12px; min-height: 0;
+}
+.slide-title {
+  font-size: clamp(26px, 4vw, 42px); font-weight: 800;
+  line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 8px;
+}
+.slide-subtitle {
+  font-size: 16px; color: var(--muted); margin-bottom: 24px; font-weight: 400;
+}
+
+/* ── COLUMNS ── */
+.cols { display: grid; gap: 20px; flex: 1; min-height: 0; }
+.cols-2 { grid-template-columns: 1fr 1fr; }
+.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.cols-1-2 { grid-template-columns: 1fr 1.6fr; }
+.cols-2-1 { grid-template-columns: 1.6fr 1fr; }
+
+/* ── CARD ── */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px; overflow: hidden;
+}
+.card-title {
+  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--muted); margin-bottom: 12px;
+}
+
+/* ── CODE BLOCK ── */
+.code {
+  font-family: var(--mono); font-size: 13px; line-height: 1.7;
+  background: #0a0c12; border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px 20px; overflow: auto;
+  color: #c9d1d9;
+}
+.code-sm { font-size: 12px; padding: 12px 16px; }
+.c-kw { color: #ff7b72; }
+.c-fn { color: #d2a8ff; }
+.c-str { color: #a5d6ff; }
+.c-cm { color: #8b949e; font-style: italic; }
+.c-num { color: #79c0ff; }
+.c-tag { color: #7ee787; }
+.c-attr { color: #d2a8ff; }
+.c-val { color: #a5d6ff; }
+
+/* ── HIGHLIGHT BOX ── */
+.hl {
+  border-radius: 8px; padding: 14px 18px;
+  border-left: 3px solid;
+}
+.hl-purple { background: rgba(124,107,255,0.1); border-color: var(--accent); }
+.hl-green { background: rgba(52,211,153,0.08); border-color: var(--green); }
+.hl-amber { background: rgba(251,191,36,0.08); border-color: var(--amber); }
+.hl-red { background: rgba(248,113,113,0.08); border-color: var(--red); }
+.hl-blue { background: rgba(96,165,250,0.08); border-color: var(--blue); }
+.hl p { font-size: 14px; line-height: 1.6; }
+
+/* ── PILL ── */
+.pill {
+  display: inline-block; font-family: var(--mono); font-size: 12px;
+  padding: 3px 10px; border-radius: 20px; font-weight: 700;
+}
+.pill-purple { background: rgba(124,107,255,0.15); color: var(--accent2); border: 1px solid rgba(124,107,255,0.3); }
+.pill-green { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+.pill-amber { background: rgba(251,191,36,0.12); color: var(--amber); border: 1px solid rgba(251,191,36,0.3); }
+.pill-red { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+.pill-blue { background: rgba(96,165,250,0.12); color: var(--blue); border: 1px solid rgba(96,165,250,0.3); }
+
+/* ── STEP LIST ── */
+.steps { display: flex; flex-direction: column; gap: 10px; }
+.step { display: flex; gap: 12px; align-items: flex-start; }
+.step-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent); color: white; display: flex;
+  align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+}
+.step p { font-size: 14px; line-height: 1.5; color: var(--text); }
+.step p b { color: var(--accent2); font-weight: 600; }
+
+/* ── TABLE ── */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th {
+  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted); padding: 8px 12px;
+  border-bottom: 1px solid var(--border2); text-align: left;
+}
+.tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* ── DIAGRAM ELEMENTS ── */
+.box-diagram {
+  border: 1px solid; border-radius: 10px; padding: 14px 18px;
+  text-align: center; position: relative;
+}
+.box-label { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; }
+.box-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.arrow-down { text-align: center; color: var(--muted); font-size: 18px; line-height: 1; margin: 4px 0; }
+
+/* ── SPEAKER NOTES ── */
+.notes-panel {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #1a0533; border-top: 2px solid var(--accent);
+  padding: 16px 40px; transform: translateY(100%);
+  transition: transform 0.3s; z-index: 100;
+  max-height: 200px; overflow-y: auto;
+}
+.notes-panel.visible { transform: translateY(0); }
+.notes-label {
+  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--accent2); margin-bottom: 8px;
+}
+.notes-text { font-size: 14px; color: #d8b4fe; line-height: 1.6; }
+
+/* ── NAV ── */
+.nav {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px; z-index: 200;
+  background: rgba(24,28,38,0.9); border: 1px solid var(--border2);
+  border-radius: 40px; padding: 8px 16px; backdrop-filter: blur(8px);
+}
+.nav-btn {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 18px; line-height: 1; padding: 4px 8px; border-radius: 6px;
+  transition: color 0.15s, background 0.15s; font-family: var(--sans);
+}
+.nav-btn:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+.nav-counter { font-family: var(--mono); font-size: 12px; color: var(--muted); min-width: 40px; text-align: center; }
+.nav-note-btn {
+  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px;
+  background: rgba(124,107,255,0.12); border: 1px solid rgba(124,107,255,0.3);
+  color: var(--accent2); cursor: pointer; transition: background 0.15s;
+}
+.nav-note-btn:hover { background: rgba(124,107,255,0.2); }
+
+/* ── PROGRESS BAR ── */
+.progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--accent); transition: width 0.3s; z-index: 300; }
+
+/* ── BROWSER MOCKUP ── */
+.browser {
+  border: 1px solid var(--border2); border-radius: 10px; overflow: hidden;
+  background: var(--surface2);
+}
+.browser-bar {
+  background: #252b3b; padding: 8px 14px; display: flex;
+  align-items: center; gap: 8px; border-bottom: 1px solid var(--border);
+}
+.browser-dot { width: 10px; height: 10px; border-radius: 50%; }
+.browser-url {
+  flex: 1; background: var(--bg); border-radius: 4px; padding: 3px 10px;
+  font-family: var(--mono); font-size: 11px; color: var(--muted); margin: 0 8px;
+}
+.browser-body { padding: 16px; }
+
+/* ── CHECKLIST ── */
+.checklist { display: flex; flex-direction: column; gap: 8px; }
+.check-item { display: flex; gap: 10px; align-items: flex-start; }
+.check-box {
+  width: 18px; height: 18px; border: 2px solid var(--border2);
+  border-radius: 4px; flex-shrink: 0; margin-top: 2px;
+  display: flex; align-items: center; justify-content: center;
+}
+.check-item p { font-size: 14px; line-height: 1.5; }
+
+/* ── SPECIAL ELEMENTS ── */
+.big-q {
+  font-size: clamp(22px, 3.5vw, 38px); font-weight: 800;
+  line-height: 1.2; color: var(--text);
+}
+.accent-line { color: var(--accent2); }
+.mono-label { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
+.divider { height: 1px; background: var(--border); margin: 12px 0; }
+.gap-sm { gap: 8px; }
+.mt-auto { margin-top: auto; }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.gap-10 { gap: 10px; }
+.gap-16 { gap: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-12 { margin-bottom: 12px; }
+.mb-16 { margin-bottom: 16px; }
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 12px; color: var(--muted); }
+.full-h { height: 100%; }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<!-- ═══════════════════════════════════════════════
+     SLIDE 1 — PROBLEMA GERADOR
+     ═══════════════════════════════════════════════ -->
+<div class="slide active" data-notes="Comece perguntando para a turma: 'Quando vocês clicam num botão e algo muda na tela sem recarregar a página — quem acham que faz isso acontecer?' Espere algumas respostas. Depois mostre o contraste entre as duas colunas. O objetivo é criar curiosidade, não explicar ainda.">
+  <div class="slide-header">
+    <span class="slide-tag tag-open">Abertura</span>
+    <span class="slide-num-badge">01 / 12</span>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Como o HTML<br><span class="accent-line">muda sozinho?</span></div>
+    <div class="slide-subtitle">O problema que vamos resolver hoje</div>
+
+    <div class="cols cols-2" style="flex:1; min-height:0;">
+      <!-- Coluna esquerda: HTML estático -->
+      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card-title">❌ sem javascript</div>
+        <div class="browser">
+          <div class="browser-bar">
+            <div class="browser-dot" style="background:#f87171"></div>
+            <div class="browser-dot" style="background:#fbbf24"></div>
+            <div class="browser-dot" style="background:#34d399"></div>
+            <div class="browser-url">minha-pagina.html</div>
+          </div>
+          <div class="browser-body">
+            <div style="background:#252b3b;border-radius:6px;padding:14px;text-align:center;border:1px solid var(--border);">
+              <div style="font-size:28px;font-weight:800;color:var(--muted);font-family:var(--mono);">0</div>
+              <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">
+                <div style="background:var(--border);border-radius:6px;padding:6px 16px;color:var(--muted);font-size:13px;cursor:not-allowed;">−</div>
+                <div style="background:var(--border);border-radius:6px;padding:6px 16px;color:var(--muted);font-size:13px;cursor:not-allowed;">+</div>
+              </div>
+            </div>
+            <p style="text-align:center;font-size:12px;color:var(--red);margin-top:12px;font-family:var(--mono);">botões não fazem nada</p>
+          </div>
+        </div>
+        <div class="hl hl-red">
+          <p>Página <b style="color:var(--red)">estática</b> — o conteúdo não muda depois de carregado. HTML e CSS sozinhos não têm lógica.</p>
+        </div>
+      </div>
+
+      <!-- Coluna direita: com JS -->
+      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card-title">✅ com javascript</div>
+        <div class="browser">
+          <div class="browser-bar">
+            <div class="browser-dot" style="background:#f87171"></div>
+            <div class="browser-dot" style="background:#fbbf24"></div>
+            <div class="browser-dot" style="background:#34d399"></div>
+            <div class="browser-url">minha-pagina.html</div>
+          </div>
+          <div class="browser-body" id="demo-browser">
+            <div style="background:#252b3b;border-radius:6px;padding:14px;text-align:center;border:1px solid rgba(52,211,153,0.3);">
+              <div style="font-size:28px;font-weight:800;color:var(--green);font-family:var(--mono);" id="demo-counter">3</div>
+              <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">
+                <button onclick="demoCount(-1)" style="background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.3);border-radius:6px;padding:6px 16px;color:var(--red);font-size:13px;cursor:pointer;font-family:var(--sans);">−</button>
+                <button onclick="demoCount(1)" style="background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.3);border-radius:6px;padding:6px 16px;color:var(--green);font-size:13px;cursor:pointer;font-family:var(--sans);">+</button>
+              </div>
+            </div>
+            <p style="text-align:center;font-size:12px;color:var(--green);margin-top:12px;font-family:var(--mono);">clique nos botões! →</p>
+          </div>
+        </div>
+        <div class="hl hl-green">
+          <p>Página <b style="color:var(--green)">dinâmica</b> — o JavaScript lê eventos do usuário e altera o HTML em tempo real.</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;text-align:center;">
+      <span class="pill pill-purple">Pergunta para a turma:</span>
+      <span style="font-size:14px;color:var(--muted);margin-left:10px;">O que acontece "por baixo dos panos" quando você clica e algo muda?</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SLIDE 2 — METODOLOGIA
+     ═══════════════════════════════════════════════ -->
+<div class="slide" data-notes="Mostre o fluxo do módulo. Explique que toda aula vai seguir esse ritmo. Os alunos devem saber que vão ver código ao vivo — incentive perguntas durante as demos. Mostre os dois projetos que vão construir hoje para criar expectativa.">
+  <div class="slide-header">
+    <span class="slide-tag tag-open">Abertura</span>
+    <span class="slide-num-badge">02 / 12</span>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Como vamos <span class="accent-line">trabalhar</span></div>
+    <div class="slide-subtitle">Metodologia do módulo</div>
+
+    <div class="cols cols-2" style="flex:1;min-height:0;">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card-title">fluxo de cada aula</div>
+        <div class="steps">
+          <div class="step"><div class="step-num" style="background:var(--blue);">1</div><p><b>Conceito</b> — explicação do tema com diagrama e exemplos</p></div>
+          <div class="step"><div class="step-num" style="background:var(--accent);">2</div><p><b>Demo ao vivo</b> — código escrito na frente da turma, incluindo erros</p></div>
+          <div class="step"><div class="step-num" style="background:var(--green);">3</div><p><b>Estudo de caso</b> — construção em conjunto de um projeto real</p></div>
+          <div class="step"><div class="step-num" style="background:var(--amber);">4</div><p><b>Prática</b> — atividade de fixação com escopo fechado</p></div>
+        </div>
+        <div class="hl hl-purple" style="margin-top:auto;">
+          <p>💬 Perguntas são bem-vindas <b style="color:var(--accent2)">durante as demos</b>. Não espere o final.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card-title">o que vamos construir hoje</div>
+        <div class="card" style="flex:1;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <span class="pill pill-green">Projeto 1</span>
+            <span style="font-family:var(--mono);font-size:13px;">Contador interativo</span>
+          </div>
+          <div style="background:#0a0c12;border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border);">
+            <div style="font-size:24px;font-weight:800;color:var(--green);font-family:var(--mono);">7</div>
+            <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
+              <span style="background:rgba(248,113,113,0.15);border-radius:4px;padding:4px 12px;color:var(--red);font-size:12px;">−</span>
+              <span style="background:rgba(52,211,153,0.15);border-radius:4px;padding:4px 12px;color:var(--green);font-size:12px;">+</span>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--border);margin:14px 0;"></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <span class="pill pill-amber">Projeto 2</span>
+            <span style="font-family:var(--mono);font-size:13px;">Formulário com validação</span>
+          </div>
+          <div style="background:#0a0c12;border-radius:8px;padding:12px;border:1px solid var(--border);">
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="background:var(--surface2);border-radius:4px;padding:6px 10px;font-size:12px;color:var(--muted);">Nome: João Silva</div>
+              <div style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:4px;padding:6px 10px;font-size:12px;color:var(--red);">E-mail inválido ✕</div>
+              <div style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:4px;padding:6px 10px;font-size:12px;color:var(--green);">Idade: 25 ✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SLIDE 3 — window e document
+     ═══════════════════════════════════════════════ -->
+<div class="slide" data-notes="Use a analogia da janela e da folha. Abra o DevTools ao vivo: digite 'window' e depois 'document' no console. Mostre que document.title retorna o título da página. Depois mude: document.title = 'Mudei!' e mostre na aba do navegador mudando. Isso impressiona bastante.">
+  <div class="slide-header">
+    <span class="slide-tag tag-concept">Conceito</span>
+    <span class="slide-num-badge">03 / 12</span>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">window <span style="color:var(--muted);font-weight:400">&</span> document</div>
+    <div class="slide-subtitle">O JavaScript enxerga o navegador e o HTML como objetos</div>
+
+    <div class="cols cols-1-2" style="flex:1;min-height:0;">
+      <!-- Diagrama -->
+      <div style="display:flex;flex-direction:column;justify-content:center;gap:6px;">
+        <div class="box-diagram" style="border-color:rgba(96,165,250,0.4);background:rgba(96,165,250,0.05);">
+          <div class="box-label" style="color:var(--blue);">window</div>
+          <div class="box-sub">O navegador inteiro — abas, URL, alertas, timers</div>
+          <div style="margin:12px 6px 0;padding:12px;border:1px solid rgba(167,139,250,0.4);border-radius:8px;background:rgba(167,139,250,0.05);">
+            <div class="box-label" style="color:var(--accent2);">document</div>
+            <div class="box-sub">O HTML carregado na aba</div>
+            <div style="margin:10px 6px 0;padding:10px;border:1px dashed rgba(52,211,153,0.4);border-radius:6px;background:rgba(52,211,153,0.04);">
+              <div style="font-family:var(--mono);font-size:11px;color:var(--green);text-align:left;">
+                &lt;<span style="color:var(--green)">html</span>&gt;<br>
+                &nbsp;&nbsp;&lt;<span style="color:var(--green)">body</span>&gt;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&lt;<span style="color:var(--green)">h1</span>&gt; ... &lt;/<span style="color:var(--green)">h1</span>&gt;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&lt;<span style="color:var(--green)">p</span>&gt; ... &lt;/<span style="color:var(--green)">p</span>&gt;<br>
+                &nbsp;&nbsp;&lt;/<span style="color:var(--green)">body</span>&gt;<br>
+                &lt;/<span style="color:var(--green)">html</span>&gt;
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hl hl-purple" style="margin-top:8px;">
+          <p><b style="color:var(--accent2)">window</b> é o objeto global. Você pode escrever só <code style="font-family:var(--mono);color:var(--accent2)">alert()</code> porque é <code style="font-family:var(--mono);color:var(--accent2)">window.alert()</code>.</p>
+        </div>
+      </div>
+
+      <!-- Código e exemplos -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <span class="mono-label">// No console do navegador</span>
+          <div class="code">
+<span class="c-cm">// window — o navegador</span>
+<span class="c-fn">console</span>.<span class="c-fn">log</span>(window);<span class="c-cm">        // objeto gigante</span>
+window.<span class="c-fn">alert</span>(<span class="c-str">"olá!"</span>);  <span class="c-cm">// popup</span>
+window.location.href;      <span class="c-cm">// URL atual</span>
+
+<span class="c-cm">// document — o HTML</span>
+<span class="c-fn">console</span>.<span class="c-fn">log</span>(document);       <span class="c-cm">// árvore de elementos</span>
+document.title;             <span class="c-cm">// "Minha Página"</span>
+document.title = <span class="c-str">"Mudei!"</span>;  <span class="c-cm">// altera a aba!</span>
+          </div>
+        </div>
+        <div>
+          <span class="mono-label">// Comparação rápida</span>
+          <table class="tbl">
+            <thead><tr><th>objeto</th><th>representa</th><th>exemplos de uso</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="pill pill-blue">window</span></td>
+                <td>O navegador</td>
+                <td style="color:var(--muted);font-family:var(--mono);font-size:11px;">alert, setTimeout, location</td>
+              </tr>
+              <tr>
+                <td><span class="pill pill-purple">document</span></td>
+                <td>O HTML da aba</td>
+                <td style="color:var(--muted);font-family:var(--mono);font-size:11px;">getElementById, querySelector</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="hl hl-amber">
+          <p>🎯 <b style="color:var(--amber)">Foco do módulo:</b> vamos usar quase sempre o <code style="font-family:var(--mono)">document</code> — é lá que estão os elementos que queremos manipular.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SLIDE 4 — getElementById
+     ═══════════════════════════════════════════════ -->
+<div class="slide" data-notes="Crie um arquivo HTML simples ao vivo com um parágrafo com id='mensagem'. Abra no navegador, abra o DevTools, e mostre: getElementById retorna o elemento. Depois mude o innerHTML. Erros comuns para mencionar: esquecer as aspas, digitar id com # (isso é CSS, não aqui).">
+  <div class="slide-header">
+    <span class="slide-tag tag-concept">Conceito</span>
+    <span class="slide-num-badge">04 / 12</span>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">getElementById</div>
+    <div class="slide-subtitle">Selecionando um elemento único pelo atributo <code style="font-family:var(--mono);font-size:0.7em;color:var(--accent2)">id</code></div>
+
+    <div class="cols cols-1-2" style="flex:1;min-height:0;">
+      <!-- Como funciona visualmente -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card">
+          <div class="card-title">HTML — identificando o elemento</div>
+          <div class="code code-sm">&lt;<span class="c-tag">p</span> <span class="c-attr">id</span>=<span class="c-val">"mensagem"</span>&gt;
+  Texto original
+&lt;/<span class="c-tag">p</span>&gt;
+
+&lt;<span class="c-tag">button</span> <span class="c-attr">id</span>=<span class="c-val">"meu-btn"</span>&gt;
+  Clique aqui
+&lt;/<span class="c-tag">button</span>&gt;</div>
+        </div>
+        <div style="text-align:center;color:var(--muted);font-size:20px;">↓</div>
+        <div class="card">
+          <div class="card-title">JavaScript — selecionando</div>
+          <div class="code code-sm"><span class="c-kw">const</span> el = document.<span class="c-fn">getElementById</span>(<span class="c-str">"mensagem"</span>);
+
+<span class="c-fn">console</span>.<span class="c-fn">log</span>(el);        <span class="c-cm">// &lt;p id="mensagem"&gt;</span>
+el.innerHTML = <span class="c-str">"Fui alterado!"</span>;</div>
+        </div>
+        <div class="hl hl-red">
+          <p>⚠️ ID não usa <code style="font-family:var(--mono);color:var(--red)">#</code> aqui! O <code style="font-family:var(--mono);color:var(--red)">#</code> é do CSS. Em JS só passa a string: <code style="font-family:var(--mono);color:var(--red)">"mensagem"</code></p>
+        </div>
+      </div>
+
+      <!-- Detalhes -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <span class="mono-label">// O que é retornado</span>
+          <table class="tbl">
+            <thead><tr><th>situação</th><th>retorno</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>ID existe na página</td>
+                <td><span class="pill pill-green">Elemento HTML</span></td>
+              </tr>
+              <tr>
+                <td>ID não existe</td>
+                <td><span class="pill pill-red">null</span></td>
+              </tr>
+              <tr>
+                <td>Dois elementos com mesmo ID</td>
+                <td style="color:var(--amber)">Retorna o primeiro ⚠️</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <span class="mono-label">// Verificando se existe antes de usar</span>
+          <div class="code code-sm"><span class="c-kw">const</span> el = document.<span class="c-fn">getElementById</span>(<span class="c-str">"mensagem"</span>);
+
+<span class="c-kw">if</span> (el !== <span class="c-kw">null</span>) {
+  el.innerHTML = <span class="c-str">"Existe e foi alterado!"</span>;
+} <span class="c-kw">else</span> {
+  <span class="c-fn">console</span>.<span class="c-fn">log</span>(<span class="c-str">"Elemento não encontrado"</span>);
+}</div>
+        </div>
+        <div class="hl hl-green">
+          <p>✅ <b style="color:var(--green)">Regra de ouro:</b> IDs devem ser únicos em toda a página. Se você precisa selecionar vários elementos iguais, use <b style="color:var(--green)">classes</b>.</p>
+        </div>
+        <div class="hl hl-blue">
+          <p>🔬 <b style="color:var(--blue)">Experimente no console:</b> document.getElementById("qualquer-id-da-pagina") e veja o que retorna.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SLIDE 5 — getElementsByClassName
+     ═══════════════════════════════════════════════ -->
+<div class="slide" data-notes="O ponto crítico aqui é explicar HTMLCollection vs Array. Mostre ao vivo que .forEach() em HTMLCollection dá erro. Depois mostre as duas soluções: for clássico ou converter para array com Array.from(). Isso vai aparecer de novo quando chegar no querySelectorAll.">
+  <div class="slide-header">
+    <span class="slide-tag tag-concept">Conceito</span>
+    <span class="slide-num-badge">05 / 12</span>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">getElementsByClassName</div>
+    <div class="slide-subtitle">Selecionando múltiplos elementos pela classe CSS</div>
+
+    <div class="cols cols-1-2" style="flex:1;min-height:0;">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card">
+          <div class="card-title">HTML — vários com mesma classe</div>
+          <div class="code code-sm">&lt;<span class="c-tag">ul</span>&gt;
+  &lt;<span class="c-tag">li</span> <span class="c-attr">class</span>=<span class="c-val">"item"</span>&gt;Maçã&lt;/<span class="c-tag">li</span>&gt;
+  &lt;<span class="c-tag">li</span> <span class="c-attr">class</span>=<span class="c-val">"item"</span>&gt;Banana&lt;/<span class="c-tag">li</span>&gt;
+  &lt;<span class="c-tag">li</span> <span class="c-attr">class</span>=<span class="c-val">"item"</span>&gt;Laranja&lt;/<span class="c-tag">li</span>&gt;
+&lt;/<span class="c-tag">ul</span>&gt;</div>
+        </div>
+        <div style="text-align:center;color:var(--muted);font-size:20px;">↓</div>
+        <div class="card">
+          <div class="card-title">JavaScript — iterando</div>
+          <div class="code code-sm"><span class="c-kw">const</span> itens = document.<span class="c-fn">getElementsByClassName</span>(<span class="c-str">"item"</span>);
+
+<span class="c-cm">// ✅ for clássico funciona</span>
+<span class="c-kw">for</span> (<span class="c-kw">let</span> i = <span class="c-num">0</span>; i &lt; itens.length; i++) {
+  itens[i].style.color = <span class="c-str">"orange"</span>;
+}
+
+<span class="c-cm">// ✅ converter para array</span>
+Array.<span class="c-fn">from</span>(itens).<span class="c-fn">forEach</span>(el => {
+  el.style.fontWeight = <span class="c-str">"bold"</span>;
+});</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card">
+          <div class="card-title">⚠️ HTMLCollection não é um Array!</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="hl hl-red">
+              <div class="code code-sm" style="background:transparent;border:none;padding:0;"><span class="c-cm">// ❌ ERRO — forEach não existe</span>
+itens.<span class="c-fn" style="text-decoration:underline wavy red">forEach</span>(el => el.style.color = <span class="c-str">"red"</span>);
+<span class="c-cm">// TypeError: itens.forEach is not a function</span></div>
+            </div>
+            <div class="hl hl-green">
+              <div class="code code-sm" style="background:transparent;border:none;padding:0;"><span class="c-cm">// ✅ CORRETO — Array.from()</span>
+Array.<span class="c-fn">from</span>(itens).<span class="c-fn">forEach</span>(el => {
+  el.style.color = <span class="c-str">"green"</span>;
+});</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <span class="mono-label">// HTMLCollection vs Array</span>
+          <table class="tbl">
+            <thead><tr><th></th><th>HTMLCollection</th><th>Array</th></tr></thead>
+            <tbody>
+              <tr><td style="color:var(--muted)">length</td><td style="color:var(--green)">✓</td><td style="color:var(--green)">✓</td></tr>
+              <tr><td style="color:var(--muted)">for loop</td><td style="color:var(--green)">✓</td><td style="color:var(--green)">✓</td></tr>
+              <tr><td style="color:var(--muted)">forEach</td><td style="color:var(--red)">✗</td><td style="color:var(--green)">✓</td></tr>
+              <tr><td style="color:var(--muted)">map/filter</td><td style="color:var(--red)">✗</td><td style="color:var(--green)">✓</td></tr>
+              <tr><td style="color:var(--muted)">atualiza ao vivo</td><td style="color:var(--green)">✓</td><td style="color:var(--red)">✗</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="hl hl-amber">
+          <p>💡 No próximo slide veremos o <code style="font-family:var(--mono)">querySelectorAll</code> que retorna um <b style="color:var(--amber)">NodeList</b> — com forEach incluso!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SLIDE 6 — querySelector e querySelectorAll
+     ═══════════════════════════════════════════════ -->
+<div class="slide" data-notes="Este slide é o mais importante do bloco de conceitos. Mostre que querySelector usa a mesma sintaxe do CSS — os alunos já sabem isso! É um atalho mental poderoso. Destaque que querySelectorAll retorna NodeList (com forEach). Faça exemplos ao vivo com seletores compostos como 'input[type=email]'.">
+  <div class="slide-header">
+    <span class="slide-tag tag-concept">Conceito</span>
+    <span class="slide-num-badge">06 / 12</span>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">querySelector <span style="color:var(--muted);font-weight:400">&</span> querySelectorAll</div>
+    <div class="slide-subtitle">Seletores CSS funcionando dentro do JavaScript</div>
+
+    <div class="cols cols-2" style="flex:1;min-height:0;">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card">
+          <div class="card-title">querySelector — retorna o primeiro</div>
+          <div class="code code-sm"><span class="c-cm">// Por ID (como #id no CSS)</span>
+document.<span class="c-fn">querySelector</span>(<span class="c-str">"#titulo"</span>);
+
+<span class="c-cm">// Por classe (.classe no CSS)</span>
+document.<span class="c-fn">querySelector</span>(<span class="c-str">".destaque"</span>);
+
+<span class="c-cm">// Por atributo</span>
+document.<span class="c-fn">querySelector</span>(<span class="c-str">"input[type='email']"</span>);
+
+<span class="c-cm">// Seletor composto</span>
+document.<span class="c-fn">querySelector</span>(<span class="c-str">"form .erro"</span>);</div>
+        </div>
+        <div class="card">
+          <div class="card-title">querySelectorAll — retorna todos (NodeList)</div>
+          <div class="code code-sm"><span class="c-cm">// Todos os li com classe "ativo"</span>
+<span class="c-kw">const</span> ativos = document.<span class="c-fn">querySelectorAll</span>(<span class="c-str">"li.ativo"</span>);
+
+<span class="c-cm">// ✅ NodeList tem forEach!</span>
+ativos.<span class="c-fn">forEach</span>(el => {
+  el.style.fontWeight = <span class="c-str">"bold"</span>;
+});</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <span class="mono-label">// Comparação completa dos seletores</span>
+          <table class="tbl">
+            <thead><tr><th>método</th><th>retorna</th><th>forEach?</th></tr></thead>
+            <tbody>
+              <tr>
+                <td style="font-family:var(--mono);font-size:11px;color:var(--accent2)">getElementById</td>
+                <td>1 elemento ou null</td>
+                <td style="color:var(--muted)">n/a</td>
+              </tr>
+              <tr>
+                <td style="font-family:var(--mono);font-size:11px;color:var(--blue)">getElementsByClassName</td>
+                <td>HTMLCollection</td>
+                <td style="color:var(--red)">✗</td>
+              </tr>
+              <tr>
+                <td style="font-family:var(--mono);font-size:11px;color:var(--accent2)">querySelector</td>
+                <td>1 elemento ou null</td>
+                <td style="color:var(--muted)">n/a</td>
+              </tr>
+              <tr>
+                <td style="font-family:var(--mono);font-size:11px;color:var(--green)">querySelectorAll</td>
+                <td>NodeList</td>
+                <td style="color:var(--green)">✓</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="hl hl-purple">
+          <p>🧠 <b style="color:var(--accent2)">Dica de memorização:</b> querySelector usa a mesma sintaxe do CSS que vocês já conhecem. <code style="font-family:var(--mono)">#id</code>, <code style="font-family:var(--mono)">.classe</code>, <code style="font-family:var(--mono)">tag</code> — tudo igual!</p>
+        </div>
+        <div class="hl hl-green">
+          <p>✅ <b style="color:var(--green)">Recomendação prática:</b> use sempre <code style="font-family:var(--mono)">querySelector</code> e <code style="font-family:var(--mono)">querySelectorAll</code> no dia a dia. São os mais flexíveis.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SLIDE 7 — innerHTML, textContent, value
+     ═══════════════════════════════════════════════ -->
+<div class="slide" data-notes="Demonstre ao vivo a diferença entre innerHTML e textContent: coloque uma tag <strong> dentro de innerHTML e veja renderizar. Depois use textContent e mostre que aparece o texto '<strong>' literalmente. Para value, peça para a turma digitar algo num input e mostrar o .value no console em tempo real.">
+  <div class="slide-header">
+    <span class="slide-tag tag-concept">Conceito</span>
+    <span class="slide-num-badge">07 / 12</span>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Lendo e <span class="accent-line">modificando</span> conteúdo</div>
+    <div class="slide-subtitle">innerHTML, textContent e value</div>
+
+    <div class="cols cols-3" style="flex:1;min-height:0;">
+      <!-- innerHTML -->
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span class="pill pill-purple">innerHTML</span>
+        </div>
+        <p style="font-size:13px;color:var(--muted);">Lê e escreve o <b style="color:var(--text)">HTML interno</b> de um elemento. Aceita tags HTML.</p>
+        <div class="code code-sm"><span class="c-kw">const</span> el = document
+  .<span class="c-fn">getElementById</span>(<span class="c-str">"caixa"</span>);
+
+<span class="c-cm">// ler</span>
+<span class="c-fn">console</span>.<span class="c-fn">log</span>(el.innerHTML);
+
+<span class="c-cm">// escrever com HTML</span>
+el.innerHTML =
+  <span class="c-str">"&lt;strong&gt;Negrito!&lt;/strong&gt;"</span>;</div>
+        <div class="hl hl-red" style="margin-top:auto;">
+          <p style="font-size:12px;">⚠️ Nunca insira dados do usuário com innerHTML — risco de <b style="color:var(--red)">XSS</b>.</p>
+        </div>
+      </div>
+
+      <!-- textContent -->
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span class="pill pill-green">textContent</span>
+        </div>
+        <p style="font-size:13px;color:var(--muted);">Lê e escreve apenas o <b style="color:var(--text)">texto puro</b>. Ignora tags HTML. Mais seguro.</p>
+        <div class="code code-sm"><span class="c-kw">const</span> el = document
+  .<span class="c-fn">getElementById</span>(<span class="c-str">"caixa"</span>);
+
+<span class="c-cm">// ler (só texto)</span>
+<span class="c-fn">console</span>.<span class="c-fn">log</span>(el.textContent);
+
+<span class="c-cm">// escrever (tag vira texto)</span>
+el.textContent =
+  <span class="c-str">"&lt;strong&gt;isso vira texto"</span>;</div>
+        <div class="hl hl-green" style="margin-top:auto;">
+          <p style="font-size:12px;">✅ Use para exibir <b style="color:var(--green)">mensagens de erro</b> e conteúdo dinâmico.</p>
+        </div>
+      </div>
+
+      <!-- value -->
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span class="pill pill-amber">value</span>
+        </div>
+        <p style="font-size:13px;color:var(--muted);">Lê o que o usuário <b style="color:var(--text)">digitou</b> em um input, select ou textarea.</p>
+        <div class="code code-sm"><span class="c-kw">const</span> input = document
+  .<span class="c-fn">querySelector</span>(<span class="c-str">"#nome"</span>);
+
+<span class="c-cm">// pegar o que foi digitado</span>
+<span class="c-kw">const</span> texto = input.value;
+<span class="c-fn">console</span>.<span class="c-fn">log</span>(texto);
+
+<span class="c-cm">// limpar o campo</span>
+input.value = <span class="c-str">""</span>;</div>
+        <div class="hl hl-amber" style="margin-top:auto;">
+          <p style="font-size:12px;">🎯 É aqui que você busca os dados do formulário para validar.</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
+      <span class="pill pill-blue">Quando usar cada um?</span>
+      <span style="font-size:13px;color:var(--muted);">Exibir HTML dinâmico → <code style="font-family:var(--mono);color:var(--accent2)">innerHTML</code> &nbsp;|&nbsp; Texto seguro → <code style="font-family:var(--mono);color:var(--green)">textContent</code> &nbsp;|&nbsp; Ler formulário → <code style="font-family:var(--mono);color:var(--amber)">value</code></span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SLIDE 8 — Evento onclick / addEventListener
+     ═══════════════════════════════════════════════ -->
+<div class="slide" data-notes="Mostre as três formas. Comece com o onclick no HTML para ser familiar, depois vá evoluindo. A conclusão é sempre: use addEventListener. Pergunte 'por que vocês acham que separar JS do HTML é melhor?' Deixe a turma raciocinar sobre manutenção e legibilidade.">
+  <div class="slide-header">
+    <span class="slide-tag tag-concept">Conceito</span>
+    <span class="slide-num-badge">08 / 12</span>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Eventos <span class="accent-line">onclick</span></div>
+    <div class="slide-subtitle">Três formas de reagir ao clique do usuário</div>
+
+    <div class="cols cols-3" style="flex:1;min-height:0;">
+      <!-- Forma 1 -->
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Forma 1</span>
+          <span class="pill pill-red">não recomendado</span>
+        </div>
+        <p style="font-size:13px;font-weight:600;">onclick inline no HTML</p>
+        <div class="code code-sm"><span class="c-cm">&lt;!-- HTML --&gt;</span>
+&lt;<span class="c-tag">button</span> <span class="c-attr">onclick</span>=
+  <span class="c-val">"minhaFuncao()"</span>&gt;
+  Clique
+&lt;/<span class="c-tag">button</span>&gt;
+
+<span class="c-cm">// JS</span>
+<span class="c-kw">function</span> <span class="c-fn">minhaFuncao</span>() {
+  <span class="c-fn">alert</span>(<span class="c-str">"clicou!"</span>);
+}</div>
+        <div class="hl hl-red" style="margin-top:auto;">
+          <p style="font-size:12px;">Mistura HTML com comportamento. Difícil de manter e testar.</p>
+        </div>
+      </div>
+
+      <!-- Forma 2 -->
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Forma 2</span>
+          <span class="pill pill-amber">aceitável</span>
+        </div>
+        <p style="font-size:13px;font-weight:600;">Propriedade onclick no JS</p>
+        <div class="code code-sm"><span class="c-cm">&lt;!-- HTML (sem evento) --&gt;</span>
+&lt;<span class="c-tag">button</span> <span class="c-attr">id</span>=<span class="c-val">"btn"</span>&gt;
+  Clique
+&lt;/<span class="c-tag">button</span>&gt;
+
+<span class="c-cm">// JS</span>
+<span class="c-kw">const</span> btn = document
+  .<span class="c-fn">getElementById</span>(<span class="c-str">"btn"</span>);
+
+btn.onclick = () => {
+  <span class="c-fn">alert</span>(<span class="c-str">"clicou!"</span>);
+};</div>
+        <div class="hl hl-amber" style="margin-top:auto;">
+          <p style="font-size:12px;">Melhor que o inline, mas só permite <b style="color:var(--amber)">um</b> handler por evento.</p>
+        </div>
+      </div>
+
+      <!-- Forma 3 -->
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;border-color:rgba(52,211,153,0.3);">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Forma 3</span>
+          <span class="pill pill-green">recomendado ✓</span>
+        </div>
+        <p style="font-size:13px;font-weight:600;">addEventListener</p>
+        <div class="code code-sm"><span class="c-cm">&lt;!-- HTML --&gt;</span>
+&lt;<span class="c-tag">button</span> <span class="c-attr">id</span>=<span class="c-val">"btn"</span>&gt;Clique&lt;/<span class="c-tag">button</span>&gt;
+
+<span class="c-cm">// JS</span>
+<span class="c-kw">const</span> btn = document
+  .<span class="c-fn">getElementById</span>(<span class="c-str">"btn"</span>);
+
+btn.<span class="c-fn">addEventListener</span>(<span class="c-str">"click"</span>, () => {
+  <span class="c-fn">console</span>.<span class="c-fn">log</span>(<span class="c-str">"evento disparado"</span>);
+});</div>
+        <div class="hl hl-green" style="margin-top:auto;">
+          <p style="font-size:12px;">Permite múltiplos listeners. HTML e JS separados. Pode remover depois.</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
+      <span class="pill pill-blue">Outros eventos úteis:</span>
+      <span style="font-size:13px;color:var(--muted);font-family:var(--mono)">
+        <span style="color:var(--accent2)">"click"</span> &nbsp;
+        <span style="color:var(--accent2)">"input"</span> &nbsp;
+        <span style="color:var(--accent2)">"change"</span> &nbsp;
+        <span style="color:var(--accent2)">"submit"</span> &nbsp;
+        <span style="color:var(--accent2)">"keydown"</span> &nbsp;
+        <span style="color:var(--accent2)">"mouseover"</span>
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SLIDE 9 — DEMO 1: CONTADOR
+     ═══════════════════════════════════════════════ -->
+<div class="slide" data-notes="LIVE CODING. Comece com o HTML na tela. Pergunte à turma: 'o que precisamos no JS antes de escrever?' Espere respostas. Escreva passo a passo. Erre de propósito uma vez — esqueça o .textContent = e mostre que o display não muda. Depois adicione o limite (não ir abaixo de 0) pedindo para a turma sugerir a solução.">
+  <div class="slide-header">
+    <span class="slide-tag tag-demo">Estudo de caso</span>
+    <span class="slide-num-badge">09 / 12</span>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Demo 1 — <span class="accent-line">Contador</span></div>
+    <div class="slide-subtitle">Codar ao vivo: botões + e − que alteram um número na tela</div>
+
+    <div class="cols cols-1-2" style="flex:1;min-height:0;">
+      <!-- Passo a passo -->
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card-title">roteiro de implementação</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <p>Criar o <b>HTML</b>: dois botões (<code style="font-family:var(--mono);color:var(--accent2)">#mais</code> e <code style="font-family:var(--mono);color:var(--accent2)">#menos</code>) e um span (<code style="font-family:var(--mono);color:var(--accent2)">#valor</code>)</p>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <p>Criar a <b>variável de estado</b>: <code style="font-family:var(--mono);color:var(--accent2)">let contador = 0</code></p>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <p>Selecionar os elementos com <b>getElementById</b></p>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <p>Adicionar <b>addEventListener("click")</b> no botão +, incrementar e atualizar o display</p>
+          </div>
+          <div class="step">
+            <div class="step-num">5</div>
+            <p>Repetir para o botão −. <b>Desafio da turma:</b> como não deixar ir abaixo de zero?</p>
+          </div>
+        </div>
+        <div class="hl hl-amber" style="margin-top:auto;">
+          <p>🎯 <b style="color:var(--amber)">Ponto de aprendizado:</b> a variável <code style="font-family:var(--mono)">contador</code> é o "estado". O DOM é só o reflexo do estado.</p>
+        </div>
+      </div>
+
+      <!-- Código completo -->
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <span class="mono-label">// Código final — construir ao vivo</span>
+        <div class="code" style="flex:1;overflow:auto;">
+<span class="c-cm">&lt;!-- HTML --&gt;</span>
+&lt;<span class="c-tag">div</span>&gt;
+  &lt;<span class="c-tag">button</span> <span class="c-attr">id</span>=<span class="c-val">"menos"</span>&gt;−&lt;/<span class="c-tag">button</span>&gt;
+  &lt;<span class="c-tag">span</span> <span class="c-attr">id</span>=<span class="c-val">"valor"</span>&gt;0&lt;/<span class="c-tag">span</span>&gt;
+  &lt;<span class="c-tag">button</span> <span class="c-attr">id</span>=<span class="c-val">"mais"</span>&gt;+&lt;/<span class="c-tag">button</span>&gt;
+&lt;/<span class="c-tag">div</span>&gt;
+
+<span class="c-cm">// JavaScript</span>
+<span class="c-kw">let</span> contador = <span class="c-num">0</span>;
+
+<span class="c-kw">const</span> display = document.<span class="c-fn">getElementById</span>(<span class="c-str">"valor"</span>);
+<span class="c-kw">const</span> btnMais = document.<span class="c-fn">getElementById</span>(<span class="c-str">"mais"</span>);
+<span class="c-kw">const</span> btnMenos = document.<span class="c-fn">getElementById</span>(<span class="c-str">"menos"</span>);
+
+btnMais.<span class="c-fn">addEventListener</span>(<span class="c-str">"click"</span>, () => {
+  contador++;
+  display.textContent = contador;
+});
+
+btnMenos.<span class="c-fn">addEventListener</span>(<span class="c-str">"click"</span>, () => {
+  <span class="c-kw">if</span> (contador > <span class="c-num">0</span>) {   <span class="c-cm">// ← desafio da turma</span>
+    contador--;
+    display.textContent = contador;
+  }
+});
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SLIDE 10 — DEMO 2: FORMULÁRIO COM VALIDAÇÃO
+     ═══════════════════════════════════════════════ -->
+<div class="slide" data-notes="Construa o HTML primeiro com os três campos. Destaque a diferença entre validação nativa do HTML5 (required, type=email) e validação manual via JS. O ponto chave: mostrar a mensagem de erro no DOM, não em alert(). Peça para a turma tentar enviar o formulário vazio e veja o comportamento.">
+  <div class="slide-header">
+    <span class="slide-tag tag-demo">Estudo de caso</span>
+    <span class="slide-num-badge">10 / 12</span>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Demo 2 — <span class="accent-line">Formulário</span></div>
+    <div class="slide-subtitle">Lendo inputs e exibindo mensagens de erro no clique do submit</div>
+
+    <div class="cols cols-1-2" style="flex:1;min-height:0;">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card-title">campos a implementar</div>
+        <table class="tbl">
+          <thead><tr><th>campo</th><th>tipo</th><th>validação</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Nome</td>
+              <td><span class="pill pill-blue" style="font-size:10px">text</span></td>
+              <td style="font-size:12px;color:var(--muted)">Não pode estar vazio</td>
+            </tr>
+            <tr>
+              <td>E-mail</td>
+              <td><span class="pill pill-blue" style="font-size:10px">email</span></td>
+              <td style="font-size:12px;color:var(--muted)">Deve conter @</td>
+            </tr>
+            <tr>
+              <td>Idade</td>
+              <td><span class="pill pill-blue" style="font-size:10px">number</span></td>
+              <td style="font-size:12px;color:var(--muted)">Maior que 0</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="hl hl-green">
+          <p><b style="color:var(--green)">Padrão:</b> mensagem de erro aparece num <code style="font-family:var(--mono)">&lt;span&gt;</code> embaixo de cada campo — nunca em <code style="font-family:var(--mono)">alert()</code>.</p>
+        </div>
+        <div class="hl hl-amber">
+          <p>🧠 <b style="color:var(--amber)">Estratégia:</b> criar uma função <code style="font-family:var(--mono)">mostrarErro(id, msg)</code> para reutilizar.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <span class="mono-label">// Lógica de validação</span>
+        <div class="code" style="flex:1;overflow:auto;font-size:12px;">
+<span class="c-cm">&lt;!-- HTML de cada campo --&gt;</span>
+&lt;<span class="c-tag">input</span> <span class="c-attr">type</span>=<span class="c-val">"text"</span> <span class="c-attr">id</span>=<span class="c-val">"nome"</span>&gt;
+&lt;<span class="c-tag">span</span> <span class="c-attr">id</span>=<span class="c-val">"erro-nome"</span>&gt;&lt;/<span class="c-tag">span</span>&gt;
+
+&lt;<span class="c-tag">input</span> <span class="c-attr">type</span>=<span class="c-val">"email"</span> <span class="c-attr">id</span>=<span class="c-val">"email"</span>&gt;
+&lt;<span class="c-tag">span</span> <span class="c-attr">id</span>=<span class="c-val">"erro-email"</span>&gt;&lt;/<span class="c-tag">span</span>&gt;
+
+<span class="c-cm">// JavaScript</span>
+<span class="c-kw">function</span> <span class="c-fn">mostrarErro</span>(id, msg) {
+  document.<span class="c-fn">getElementById</span>(id).textContent = msg;
+}
+
+document.<span class="c-fn">getElementById</span>(<span class="c-str">"submit"</span>)
+  .<span class="c-fn">addEventListener</span>(<span class="c-str">"click"</span>, () => {
+
+  <span class="c-kw">const</span> nome = document
+    .<span class="c-fn">getElementById</span>(<span class="c-str">"nome"</span>).value;
+  <span class="c-kw">const</span> email = document
+    .<span class="c-fn">getElementById</span>(<span class="c-str">"email"</span>).value;
+  <span class="c-kw">const</span> idade = document
+    .<span class="c-fn">getElementById</span>(<span class="c-str">"idade"</span>).value;
+
+  <span class="c-cm">// Valida nome</span>
+  <span class="c-kw">if</span> (nome.<span class="c-fn">trim</span>() === <span class="c-str">""</span>) {
+    <span class="c-fn">mostrarErro</span>(<span class="c-str">"erro-nome"</span>, <span class="c-str">"Nome é obrigatório"</span>);
+  } <span class="c-kw">else</span> {
+    <span class="c-fn">mostrarErro</span>(<span class="c-str">"erro-nome"</span>, <span class="c-str">""</span>);
+  }
+
+  <span class="c-cm">// Valida e-mail</span>
+  <span class="c-kw">if</span> (!email.<span class="c-fn">includes</span>(<span class="c-str">"@"</span>)) {
+    <span class="c-fn">mostrarErro</span>(<span class="c-str">"erro-email"</span>, <span class="c-str">"E-mail inválido"</span>);
+  }
+});
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SLIDE 11 — ATIVIDADE DE FIXAÇÃO
+     ═══════════════════════════════════════════════ -->
+<div class="slide" data-notes="Compartilhe o enunciado em formato impresso ou digital antes de soltar a turma. Circule pela sala. Erros mais comuns: usar alert() em vez de innerHTML/textContent, esquecer .value nos inputs, confundir === com ==, e não usar .trim() na validação de campos de texto. Reserve 5 min no final para fazer um aluno mostrar a solução.">
+  <div class="slide-header">
+    <span class="slide-tag tag-practice">Prática</span>
+    <span class="slide-num-badge">11 / 12</span>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Atividade de <span class="accent-line">fixação</span></div>
+    <div class="slide-subtitle">Escopo fechado — individual ou dupla — ~45 min</div>
+
+    <div class="cols cols-2" style="flex:1;min-height:0;">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card-title">entrega esperada</div>
+        <div class="hl hl-purple">
+          <p style="font-size:14px;">Implementar um formulário com <b style="color:var(--accent2)">mínimo 5 inputs</b> de tipos diferentes, com validação manual via JavaScript ao clicar no botão de submit.</p>
+        </div>
+        <div class="card-title" style="margin-top:4px;">tipos sugeridos de campos</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <span class="pill pill-blue">text — nome</span>
+          <span class="pill pill-blue">email</span>
+          <span class="pill pill-blue">number — idade</span>
+          <span class="pill pill-blue">date — nascimento</span>
+          <span class="pill pill-blue">select — estado</span>
+          <span class="pill pill-blue">checkbox — aceite</span>
+          <span class="pill pill-blue">radio — gênero</span>
+          <span class="pill pill-blue">tel — telefone</span>
+        </div>
+        <div class="card-title" style="margin-top:4px;">erros comuns a evitar</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div class="hl hl-red"><p style="font-size:12px;">❌ usar <code style="font-family:var(--mono)">alert()</code> para mostrar erros — use o DOM</p></div>
+          <div class="hl hl-red"><p style="font-size:12px;">❌ esquecer o <code style="font-family:var(--mono)">.value</code> ao ler o input</p></div>
+          <div class="hl hl-red"><p style="font-size:12px;">❌ não usar <code style="font-family:var(--mono)">.trim()</code> em campos de texto</p></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card-title">critérios de avaliação</div>
+        <div class="checklist">
+          <div class="check-item"><div class="check-box" style="border-color:rgba(52,211,153,0.4)"></div><p>Formulário com ao menos 5 inputs de tipos diferentes</p></div>
+          <div class="check-item"><div class="check-box" style="border-color:rgba(52,211,153,0.4)"></div><p>Cada campo possui regra de validação específica</p></div>
+          <div class="check-item"><div class="check-box" style="border-color:rgba(52,211,153,0.4)"></div><p>Mensagens de erro aparecem no DOM (não em alert)</p></div>
+          <div class="check-item"><div class="check-box" style="border-color:rgba(52,211,153,0.4)"></div><p>Erros são limpos quando o campo é preenchido corretamente</p></div>
+          <div class="check-item"><div class="check-box" style="border-color:rgba(52,211,153,0.4)"></div><p>Validação é disparada pelo clique no botão de submit</p></div>
+        </div>
+        <span class="mono-label" style="margin-top:8px;">// Estrutura mínima por campo</span>
+        <div class="code code-sm">&lt;<span class="c-tag">div</span>&gt;
+  &lt;<span class="c-tag">label</span>&gt;Nome&lt;/<span class="c-tag">label</span>&gt;
+  &lt;<span class="c-tag">input</span> <span class="c-attr">type</span>=<span class="c-val">"text"</span> <span class="c-attr">id</span>=<span class="c-val">"nome"</span>&gt;
+  &lt;<span class="c-tag">span</span> <span class="c-attr">id</span>=<span class="c-val">"erro-nome"</span>
+    <span class="c-attr">style</span>=<span class="c-val">"color:red"</span>&gt;&lt;/<span class="c-tag">span</span>&gt;
+&lt;/<span class="c-tag">div</span>&gt;</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SLIDE 12 — REVISÃO E PRÓXIMOS PASSOS
+     ═══════════════════════════════════════════════ -->
+<div class="slide" data-notes="Retorne à pergunta do Slide 1 e responda agora com a turma. Percorra o mapa mental pedindo para os alunos completarem as frases. Ex: 'Para selecionar um elemento por ID usamos...?' Termine com o teaser: classList, criação dinâmica de elementos — o que vem a seguir deixa a turma curiosa.">
+  <div class="slide-header">
+    <span class="slide-tag tag-close">Encerramento</span>
+    <span class="slide-num-badge">12 / 12</span>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">O que <span class="accent-line">aprendemos</span> hoje</div>
+    <div class="slide-subtitle">Revisão e próximos passos</div>
+
+    <div class="cols cols-2" style="flex:1;min-height:0;">
+      <!-- Mapa de conceitos -->
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="card-title">mapa de conceitos</div>
+        <div style="display:flex;flex-direction:column;gap:0;align-items:center;">
+          <div class="box-diagram" style="border-color:rgba(96,165,250,0.4);background:rgba(96,165,250,0.07);width:100%;">
+            <div class="box-label" style="color:var(--blue)">window</div>
+            <div class="box-sub">O navegador</div>
+          </div>
+          <div class="arrow-down">↓</div>
+          <div class="box-diagram" style="border-color:rgba(167,139,250,0.4);background:rgba(167,139,250,0.07);width:100%;">
+            <div class="box-label" style="color:var(--accent2)">document</div>
+            <div class="box-sub">O HTML da página</div>
+          </div>
+          <div class="arrow-down">↓</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;">
+            <div class="box-diagram" style="border-color:rgba(52,211,153,0.3);background:rgba(52,211,153,0.05);padding:10px;">
+              <div class="box-label" style="color:var(--green);font-size:10px">Seletores</div>
+              <div class="box-sub" style="font-size:11px">getElementById<br>querySelector</div>
+            </div>
+            <div class="box-diagram" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.05);padding:10px;">
+              <div class="box-label" style="color:var(--amber);font-size:10px">Conteúdo</div>
+              <div class="box-sub" style="font-size:11px">innerHTML<br>textContent · value</div>
+            </div>
+          </div>
+          <div class="arrow-down">↓</div>
+          <div class="box-diagram" style="border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.07);width:100%;">
+            <div class="box-label" style="color:var(--pink)">addEventListener</div>
+            <div class="box-sub">Reagindo ao usuário</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Próximos passos -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <div class="card-title">✅ o que vocês já sabem fazer</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span style="color:var(--green);font-size:14px;">✓</span>
+              <span style="font-size:13px;">Selecionar elementos por ID e classe</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span style="color:var(--green);font-size:14px;">✓</span>
+              <span style="font-size:13px;">Usar querySelector com seletores CSS</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span style="color:var(--green);font-size:14px;">✓</span>
+              <span style="font-size:13px;">Ler e modificar o conteúdo de elementos</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span style="color:var(--green);font-size:14px;">✓</span>
+              <span style="font-size:13px;">Reagir a cliques com addEventListener</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span style="color:var(--green);font-size:14px;">✓</span>
+              <span style="font-size:13px;">Validar formulários via JavaScript</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div>
+          <div class="card-title">🚀 próxima aula — teaser</div>
+          <div class="hl hl-purple" style="margin-top:8px;">
+            <p style="font-size:13px;">Manipulação de <b style="color:var(--accent2)">classes CSS</b> via <code style="font-family:var(--mono)">classList</code> (add, remove, toggle) + <b style="color:var(--accent2)">criação e remoção</b> de elementos no DOM com <code style="font-family:var(--mono)">createElement</code> e <code style="font-family:var(--mono)">appendChild</code>.</p>
+          </div>
+        </div>
+
+        <div class="hl hl-blue" style="margin-top:auto;">
+          <p style="font-size:13px;">💬 <b style="color:var(--blue)">Pergunta de fechamento:</b> "Agora vocês sabem responder — como o HTML muda sem recarregar a página?"</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<!-- NOTES PANEL -->
+<div class="notes-panel" id="notes">
+  <div class="notes-label">📋 Roteiro do professor</div>
+  <div class="notes-text" id="notes-text">Carregando...</div>
+</div>
+
+<!-- NAVIGATION -->
+<div class="nav">
+  <button class="nav-btn" onclick="prevSlide()" title="Anterior (←)">←</button>
+  <span class="nav-counter" id="counter">1 / 12</span>
+  <button class="nav-btn" onclick="nextSlide()" title="Próximo (→)">→</button>
+  <button class="nav-note-btn" onclick="toggleNotes()" id="noteBtn">notas</button>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+let demoVal = 3;
+
+function showSlide(n) {
+  slides[current].classList.remove('active');
+  current = (n + total) % total;
+  slides[current].classList.add('active');
+  document.getElementById('counter').textContent = (current + 1) + ' / ' + total;
+  document.getElementById('progress').style.width = ((current + 1) / total * 100) + '%';
+  const notes = slides[current].dataset.notes || '';
+  document.getElementById('notes-text').textContent = notes;
+}
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+function toggleNotes() {
+  const p = document.getElementById('notes');
+  p.classList.toggle('visible');
+  document.getElementById('noteBtn').textContent = p.classList.contains('visible') ? 'fechar' : 'notas';
+}
+function demoCount(n) {
+  demoVal = Math.max(0, demoVal + n);
+  const el = document.getElementById('demo-counter');
+  if (el) el.textContent = demoVal;
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+  if (e.key === 'n' || e.key === 'N') toggleNotes();
+});
+showSlide(0);
+</script>
+</body>
+</html>
