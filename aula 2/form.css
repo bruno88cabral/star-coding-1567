@@ -72,3 +72,8 @@ button:hover {
   display: block;
   min-height: 1rem;
 }
+
+p {
+  color: lime;
+  display: none;
+}
