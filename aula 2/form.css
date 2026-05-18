@@ -77,3 +77,7 @@ p {
   color: lime;
   display: none;
 }
+
+.field-error {
+  border: 2px solid #d9534f;
+}
