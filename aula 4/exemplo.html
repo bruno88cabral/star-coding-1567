@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lista de Pokémon Super Simples</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        padding: 20px;
+      }
+      h1 {
+        color: #333;
+      }
+      ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      li {
+        background: #fff;
+        margin: 5px 0;
+        padding: 10px;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-transform: capitalize;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Minha Lista de Pokémon</h1>
+
+    <ul id="lista-pokemon"></ul>
+
+    <script>
+      const url = "https://pokeapi.co/api/v2/pokemon?limit=30";
+
+      async function buscarPokemon() {
+        try {
+          const resposta = await fetch(url);
+          const dados = await resposta.json();
+          const pokemons = dados.results;
+
+          const listaUl = document.getElementById("lista-pokemon");
+
+          pokemons.forEach(async (pokemon) => {
+            const itemLista = document.createElement("li");
+            itemLista.textContent = pokemon.name;
+            listaUl.appendChild(itemLista);
+
+            const resposta = await fetch(pokemon.url);
+            const dados = await resposta.json();
+
+            const imgItem = document.createElement("img");
+            const srcImage = dados.sprites.front_default;
+            imgItem.setAttribute("src", srcImage);
+
+            itemLista.appendChild(imgItem);
+          });
+        } catch (erro) {
+          console.error("Ops, algo deu errado:", erro);
+        }
+      }
+
+      buscarPokemon();
+    </script>
+  </body>
+</html>
