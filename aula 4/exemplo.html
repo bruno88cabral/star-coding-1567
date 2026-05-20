@@ -32,23 +32,65 @@
     <ul id="lista-pokemon"></ul>
 
     <script>
+      const storagePokemons = localStorage.getItem("pokemons");
+
       const url = "https://pokeapi.co/api/v2/pokemon?limit=30";
+
+      async function getPokemons() {
+        if (!storagePokemons) {
+          try {
+            const resposta = await fetch(url);
+            const dados = await resposta.json();
+            const pokemons = dados.results;
+
+            return pokemons;
+          } catch (error) {
+            console.log(error);
+          }
+        }
+
+        return JSON.parse(storagePokemons);
+      }
+
+      async function getPokemonDetails(pokemon) {
+        const pokemonNameNormalize = pokemon.name.toLowerCase();
+        const storagePokemonDetail = localStorage.getItem(
+          `pokemon-${pokemon.name}`,
+        );
+        if (!storagePokemonDetail) {
+          try {
+            const resposta = await fetch(pokemon.url);
+            const pokemonDetail = await resposta.json();
+
+            localStorage.setItem(
+              `pokemon-${pokemon.name}`,
+              JSON.stringify(pokemonDetail),
+            );
+
+            return pokemonDetail;
+          } catch (error) {
+            console.log(error);
+          }
+        }
+        return storagePokemonDetail;
+      }
 
       async function buscarPokemon() {
         try {
-          const resposta = await fetch(url);
-          const dados = await resposta.json();
-          const pokemons = dados.results;
+          const pokemons = await getPokemons();
+          localStorage.setItem("pokemons", JSON.stringify(pokemons));
 
           const listaUl = document.getElementById("lista-pokemon");
-
+          console.log(pokemons);
           pokemons.forEach(async (pokemon) => {
             const itemLista = document.createElement("li");
             itemLista.textContent = pokemon.name;
             listaUl.appendChild(itemLista);
 
-            const resposta = await fetch(pokemon.url);
-            const dados = await resposta.json();
+            const pokemonDetail = getPokemonDetails({
+              url: pokemon.url,
+              name: pokemon.name,
+            });
 
             const imgItem = document.createElement("img");
             const srcImage = dados.sprites.front_default;
